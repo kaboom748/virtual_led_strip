@@ -1,6 +1,3 @@
-ESP8266 OK
-ESP32 SOON... debugging 
-
 
 <img width="1846" height="968" alt="image" src="https://github.com/user-attachments/assets/884e29b1-7563-4ba1-a137-3d0b4d6b03f2" />
 
