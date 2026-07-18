@@ -583,7 +583,7 @@ void VirtualLedStrip::start_server_() {
     return;
   }
   this->last_beat_ = millis();
-  ESP_LOGW(TAG, "DIAG listening on port %u (server ok)", this->port_);
+  ESP_LOGI(TAG, "listening on port %u", this->port_);
 }
 
 void VirtualLedStrip::dump_config() {
@@ -762,7 +762,6 @@ void VirtualLedStrip::accept_client_() {
   auto client = this->server_->accept_loop_monitored(nullptr, nullptr);
   if (client == nullptr)
     return;
-  ESP_LOGW(TAG, "DIAG accept: client accepte");
   client->setblocking(false);
   this->pending_client_ = std::move(client);
   this->request_len_ = 0;
@@ -787,7 +786,6 @@ void VirtualLedStrip::read_request_() {
   uint8_t b[64];
   for (;;) {
     const ssize_t len = this->pending_client_->read(b, sizeof(b));
-    ESP_LOGW(TAG, "DIAG read: len=%d errno=%d", (int) len, errno);
     // 0 et -1 ne veulent PAS dire la meme chose, et les confondre gele le
     // serveur pour toujours. lwip_raw_tcp_impl.cpp est explicite:
     //   rx_closed_ && rx_buf_ == nullptr  -> return 0      (le pair est parti)
@@ -935,7 +933,14 @@ void VirtualLedStrip::loop() {
     // delai de garde, le premier gele pending_client_ pour toujours: accept()
     // n'accepte plus rien, fetch('/events') n'arrive jamais, et le ruban reste
     // noir pendant que la page a l'air parfaitement chargee.
-    if (this->pending_client_ != nullptr && now - this->pending_since_ > REQUEST_TIMEOUT_MS) {
+    // millis() FRAIS, pas le 'now' capture en tete de loop(). read_request_ vient
+    // peut-etre de mettre pending_since_ a jour a une valeur PLUS RECENTE que ce
+    // 'now' fige: la soustraction uint32_t deborde alors en un nombre enorme et
+    // tue le client instantanement. Sur ESP8266 read() rend tout d'un coup et
+    // handle_request_ part avant d'arriver ici; sur ESP32 read() plafonne a 64,
+    // la requete s'etale sur plusieurs reads, on atteint ce test avec
+    // pending_since_ > now -> underflow -> "idle client dropped" en pleine requete.
+    if (this->pending_client_ != nullptr && millis() - this->pending_since_ > REQUEST_TIMEOUT_MS) {
       ESP_LOGD(TAG, "idle client dropped");
       this->pending_client_->close();
       this->pending_client_ = nullptr;

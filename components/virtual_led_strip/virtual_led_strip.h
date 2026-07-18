@@ -100,7 +100,15 @@ class VirtualLedStrip final : public light::AddressableLight {
   std::unique_ptr<socket::Socket> pending_client_;
   std::unique_ptr<socket::Socket> stream_client_;
 
-  char request_[160]{};
+  // Chrome envoie ~450 octets d'en-tetes. A 160, le buffer se remplissait avant
+  // le CRLF CRLF final: la requete n'etait jamais reconnue complete, handle_
+  // request_ jamais appele, et le client largue comme "idle" au bout de 2 s --
+  // page blanche. Invisible sur ESP8266, dont la requete transferee tombait
+  // sous 160. La boucle de lecture continue de scruter la fin des en-tetes meme
+  // buffer plein, donc 512 est une marge, pas une limite dure.
+  // 512 est une marge: on n'a besoin que de la premiere ligne (le chemin), et la
+  // boucle de lecture continue de scruter la fin des en-tetes meme buffer plein.
+  char request_[512]{};
   size_t request_len_{0};
   uint8_t nl_{0};
   uint32_t pending_since_{0};
