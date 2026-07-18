@@ -1,3 +1,5 @@
+<img width="1846" height="968" alt="image" src="https://github.com/user-attachments/assets/884e29b1-7563-4ba1-a137-3d0b4d6b03f2" />
+
 # virtual_led_strip
 
 An ESPHome `light:` platform with no pin. **Your browser is the strip.**
