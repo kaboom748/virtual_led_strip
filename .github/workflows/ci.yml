@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  esphome:
+    name: ${{ matrix.target }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: esp8266
+            file: tests/test_esp8266.yaml
+          - target: esp32-arduino
+            file: tests/test_esp32_arduino.yaml
+          - target: esp32-idf
+            file: tests/test_esp32_idf.yaml
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.platformio
+            ~/.cache/pip
+          key: ${{ runner.os }}-${{ matrix.target }}-${{ hashFiles('tests/*.yaml') }}
+      - run: pip install esphome
+      - run: esphome config ${{ matrix.file }}
+      - run: esphome compile ${{ matrix.file }}
+
+  ruff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install ruff
+      - run: ruff check components/
+      - run: ruff format --check components/
