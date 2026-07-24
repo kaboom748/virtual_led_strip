@@ -254,3 +254,10 @@ black does not fade — it snaps.**
 
 GPLv3 for the C++, MIT for the Python — ESPHome's own model. GitHub will show
 `NOASSERTION`; so does `esphome/esphome`.
+
+```markdown
+- **One viewer at a time:** opening the page in a second tab (or another
+  machine) takes the stream over from the first — the previous viewer goes
+  dark. The counters stay honest: a "dropped frame" is an effect frame no
+  viewer ever saw, not a smoothing artifact.
+```
